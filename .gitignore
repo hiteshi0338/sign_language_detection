@@ -1,0 +1,12 @@
+.venv*/
+venv/
+__pycache__/
+*.pyc
+.vscode/
+.ipynb_checkpoints/
+Image/
+MP_Data/
+*.zip
+Logs/
+*.keras
+*.h5
