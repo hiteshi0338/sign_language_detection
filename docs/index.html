@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASL Alphabet Recognition</title>
+<meta name="description" content="Recognises the ASL alphabet A-Z, including J and Z, from your webcam. Runs entirely in your browser.">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1b1f24; --muted: #5d6671;
+    --accent: #e8590c; --accent-text: #ffffff; --border: #d9dde3; --bar: #fbd5bd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171c; --card: #1d2229; --text: #e8ebef; --muted: #98a2ae;
+            --border: #333b46; --bar: #5a3420; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 8px; background: #0c0e11; }
+  #status { margin: 10px 0 0; color: var(--muted); font-size: 0.92rem; min-height: 1.4em; }
+  #status.error { color: #c92a2a; }
+  button { font: inherit; border: 1px solid var(--border); background: var(--card); color: var(--text);
+           border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  h2 { font-size: 1rem; margin: 0 0 8px; }
+  #text { min-height: 3.2em; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+          font-size: 1.5rem; letter-spacing: 0.04em; word-break: break-all; white-space: pre-wrap; }
+  .bar { position: relative; height: 30px; margin: 6px 0; border-radius: 6px; background: var(--bg); overflow: hidden; }
+  .bar > i { position: absolute; inset: 0 auto 0 0; background: var(--bar); width: 0; transition: width 0.12s; }
+  .bar > span { position: relative; padding: 0 10px; line-height: 30px; font-weight: 600; }
+  ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  li { margin: 4px 0; }
+  .small { color: var(--muted); font-size: 0.85rem; }
+  .stack > * + * { margin-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ASL alphabet recognition</h1>
+  <p class="lead">Show an ASL letter to your webcam and it appears as text. J and Z are read from the movement.
+     Everything runs in your browser: no video is uploaded.</p>
+
+  <div class="grid">
+    <section class="card">
+      <canvas id="view" width="640" height="480" aria-label="Camera view with the hand box"></canvas>
+      <p id="status" role="status" aria-live="polite">Loading…</p>
+      <div class="row">
+        <button id="start" class="primary" disabled>Start camera</button>
+      </div>
+    </section>
+
+    <div class="stack">
+      <section class="card">
+        <h2>Text so far</h2>
+        <div id="text" aria-live="polite"></div>
+        <div class="row">
+          <button id="speak" class="primary">Speak</button>
+          <button id="space">Space</button>
+          <button id="back">Backspace</button>
+          <button id="clear">Clear</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Top guesses</h2>
+        <div id="bars"></div>
+        <p class="small" id="rate"></p>
+      </section>
+
+      <section class="card">
+        <h2>Tips</h2>
+        <ul>
+          <li>Keep your hand <b>inside the white box</b> on the left of the picture.</li>
+          <li>Hold a letter steady for about half a second.</li>
+          <li>For <b>J</b> and <b>Z</b>, draw the letter in the air inside the box, taking about one second.</li>
+          <li>Lower or remove your hand between repeated letters (for example L-L).</li>
+          <li>Use a plain background and good light.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- MediaPipe Hands (self-hosted). Same model family as the Python training code. -->
+<script src="mediapipe/hands/hands.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
