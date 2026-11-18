@@ -7,8 +7,7 @@
 
   Module.expectedDataFileDownloads++;
   (function() {
-    // When running as a pthread, FS operations are proxied to the main thread, so we don't need to
-    // fetch the .data bundle on the worker
+   
     if (Module['ENVIRONMENT_IS_PTHREAD']) return;
     var loadPackage = function(metadata) {
 
@@ -16,7 +15,7 @@
       if (typeof window === 'object') {
         PACKAGE_PATH = window['encodeURIComponent'](window.location.pathname.toString().substring(0, window.location.pathname.toString().lastIndexOf('/')) + '/');
       } else if (typeof process === 'undefined' && typeof location !== 'undefined') {
-        // web worker
+        
         PACKAGE_PATH = encodeURIComponent(location.pathname.toString().substring(0, location.pathname.toString().lastIndexOf('/')) + '/');
       }
       var PACKAGE_NAME = 'blaze-out/k8-opt/genfiles/third_party/mediapipe/web/solutions/hands/hands_solution_packed_assets.data';
@@ -183,7 +182,7 @@ Module['FS_createPath']("/third_party/mediapipe/modules", "palm_detection", true
       runWithFS();
     } else {
       if (!Module['preRun']) Module['preRun'] = [];
-      Module["preRun"].push(runWithFS); // FS is not initialized yet, wait for it
+      Module["preRun"].push(runWithFS); 
     }
 
     }

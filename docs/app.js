@@ -1,11 +1,9 @@
-// Camera, MediaPipe Hands and the page. The recognition itself lives in asl_logic.js.
+
 import { Recognizer, decodeModel, CONFIG } from "./asl_logic.js";
 
-// Same geometry as the training data: a 640x480 frame, crop box x 0-300, y 40-400.
 const FRAME_W = 640, FRAME_H = 480;
 const CROP = { x: 0, y: 40, w: 300, h: 360 };
 
-// Standard 21-point hand skeleton.
 const CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
   [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 
@@ -22,7 +20,7 @@ video.muted = true;
 
 let recognizer = null;
 let hands = null;
-let lastLandmarks = null;     // landmarks of the latest sample, in crop coordinates (0-1)
+let lastLandmarks = null;     
 let running = false;
 let busy = false;
 let nextSample = 0;
@@ -34,7 +32,6 @@ function setStatus(message, isError = false) {
   el.classList.toggle("error", isError);
 }
 
-// ------------------------------------------------------------- drawing --
 function outlinedText(text, x, y, size = 18) {
   vctx.font = `600 ${size}px system-ui, sans-serif`;
   vctx.lineWidth = 4;
@@ -100,7 +97,6 @@ function renderPanel() {
   }
 }
 
-// ------------------------------------------------------------ sampling --
 function landmarksToKeypoints(list) {
   const kp = new Array(CONFIG.KEYPOINTS);
   list.forEach((p, i) => { kp[3 * i] = p.x; kp[3 * i + 1] = p.y; kp[3 * i + 2] = p.z; });
@@ -110,7 +106,6 @@ function landmarksToKeypoints(list) {
 let latestResults = null;
 
 async function takeSample(now) {
-  // Cut the crop box out of the (still unmarked) camera frame and run hand tracking on it.
   cctx.drawImage(view, CROP.x, CROP.y, CROP.w, CROP.h, 0, 0, CROP.w, CROP.h);
   latestResults = null;
   await hands.send({ image: cropCanvas });
@@ -133,7 +128,7 @@ async function loop(now) {
   requestAnimationFrame(loop);
   if (video.readyState < 2) return;
 
-  vctx.drawImage(video, 0, 0, FRAME_W, FRAME_H);          // unmirrored, like the training frames
+  vctx.drawImage(video, 0, 0, FRAME_W, FRAME_H);          
   const interval = 1000 / CONFIG.SAMPLE_FPS;
   if (!busy && now >= nextSample) {
     nextSample = Math.max(nextSample + interval, now - interval);
@@ -144,7 +139,6 @@ async function loop(now) {
   drawOverlay();
 }
 
-// --------------------------------------------------------------- setup --
 async function loadModel() {
   const res = await fetch("model.json", { cache: "no-cache" });
   if (!res.ok) throw new Error("model.json not found (run export_web_model.py and upload docs/model.json)");
@@ -159,7 +153,7 @@ async function init() {
   try {
     setStatus("Loading the model…");
     recognizer = new Recognizer(await loadModel());
-    window.asl = { recognizer };                           // handy for debugging in the console
+    window.asl = { recognizer };                           
     renderPanel();
     setStatus("Loading hand tracking… (about 10 MB the first time)");
     hands = new window.Hands({ locateFile: (file) => `mediapipe/hands/${file}` });

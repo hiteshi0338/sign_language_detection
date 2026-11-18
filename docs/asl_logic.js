@@ -1,25 +1,21 @@
-// Recognition logic for the browser version. No DOM, no camera: it can be tested in Node.
-// It is a line-by-line port of asl_model.py (the LSTM) and app_local.py (the typing rules).
 
 export const CONFIG = {
-  SEQUENCE_LENGTH: 20,        // frames the LSTM looks at (must match training)
-  SAMPLE_FPS: 15,             // samples per second (must match training clips)
-  KEYPOINTS: 63,              // 21 landmarks x (x, y, z)
+  SEQUENCE_LENGTH: 20,        
+  SAMPLE_FPS: 15,             
+  KEYPOINTS: 63,
   NO_SIGN: "NOSIGN",
-  SMOOTH_SAMPLES: 4,          // average this many recent predictions (cuts flicker)
-  STABLE_SAMPLES: 6,          // same still letter this many samples in a row (~0.4 s)
-  THRESHOLD: 0.80,            // minimum averaged confidence for a still letter
-  NO_HAND_RESET: 5,           // samples without a hand before everything resets
-  MIN_HAND_SHARE: 0.70,       // share of the window that must contain a hand
+  SMOOTH_SAMPLES: 4,          
+  STABLE_SAMPLES: 6,
+  THRESHOLD: 0.80,            
+  NO_HAND_RESET: 5,           
+  MIN_HAND_SHARE: 0.70,       
   MOTION_LETTERS: ["J", "Z"],
-  MOTION_THRESHOLD: 0.90,     // J / Z need higher confidence...
-  MOTION_STABLE_SAMPLES: 2,   // ...but only for this many samples in a row
-  // If J / Z is recognised right after its starting handshape was typed, replace it.
+  MOTION_THRESHOLD: 0.90,     
+  MOTION_STABLE_SAMPLES: 2,   
   START_POSE_FIX: { J: ["I"], Z: ["D", "G", "L"] },
   FIX_WINDOW_MS: 1600,
 };
 
-// ---------------------------------------------------------------- model --
 
 function decodeFloat32(b64) {
   const bin = atob(b64);
@@ -28,7 +24,6 @@ function decodeFloat32(b64) {
   return new Float32Array(bytes.buffer);
 }
 
-/** model.json (made by export_web_model.py) -> { actions, w } */
 export function decodeModel(json) {
   const w = {};
   for (const [name, entry] of Object.entries(json.weights)) {
@@ -42,12 +37,10 @@ export function decodeModel(json) {
 
 const sigmoid = (v) => 1 / (1 + Math.exp(-v));
 
-/** Keras LSTM forward pass (gate order: input, forget, cell, output). */
 function lstm(x, T, inDim, K, R, b, returnSequences) {
   const units = R.shape[0];
   const u4 = 4 * units;
   const Kd = K.data, Rd = R.data;
-  // z[t] = x[t] @ K + b
   const z = new Float32Array(T * u4);
   for (let t = 0; t < T; t++) {
     const zt = t * u4;
@@ -95,7 +88,6 @@ function dense(x, W, b, relu) {
   return y;
 }
 
-/** sequence: Float32Array of length T*63 -> Float32Array of class probabilities. */
 export function predictProbs(model, sequence, T = CONFIG.SEQUENCE_LENGTH) {
   const w = model.w;
   let x = lstm(sequence, T, CONFIG.KEYPOINTS, w.lstm0_kernel, w.lstm0_recurrent, w.lstm0_bias, true);
@@ -121,7 +113,6 @@ function argmax(a) {
   return best;
 }
 
-// ----------------------------------------------------------- recognizer --
 
 export class Recognizer {
   constructor(model, config = CONFIG) {
@@ -136,11 +127,11 @@ export class Recognizer {
   }
 
   resetTracking() {
-    this.buffer = [];        // last SEQUENCE_LENGTH keypoint frames
-    this.present = [];       // was a hand found in each of them
-    this.history = [];       // recent probability vectors
-    this.recent = [];        // recent winning still letters
-    this.motionRecent = [];  // recent J / Z hits
+    this.buffer = [];        
+    this.present = [];       
+    this.history = [];       
+    this.recent = [];        
+    this.motionRecent = [];  
     this.lastLetter = null;
   }
 
@@ -157,7 +148,6 @@ export class Recognizer {
     this.lastTypedAt = nowMs;
   }
 
-  /** Run once per sample. keypoints: array of 63 numbers, or null when no hand was found. */
   step(keypoints, nowMs) {
     const c = this.cfg;
     const found = keypoints !== null;
@@ -189,8 +179,6 @@ export class Recognizer {
       .sort((a, b) => probs[b] - probs[a]).slice(0, 3)
       .map((i) => [displayName(this.actions[i]), probs[i]]);
 
-    // Motion letters (J, Z) only match for a few samples while the movement fills the
-    // window, so they are judged on the raw prediction, not the smoothed one.
     const rawBest = argmax(raw);
     if (c.MOTION_LETTERS.includes(this.actions[rawBest]) && raw[rawBest] >= c.MOTION_THRESHOLD) {
       this.motionRecent.push(rawBest);
@@ -207,7 +195,6 @@ export class Recognizer {
       return;
     }
 
-    // Still letters: smoothed and held steady.
     if (this.actions[best] === c.NO_SIGN || c.MOTION_LETTERS.includes(this.actions[best])
         || probs[best] < c.THRESHOLD) {
       this.recent = [];
