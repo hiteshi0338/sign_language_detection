@@ -184,6 +184,6 @@ with gr.Blocks(title="ASL Letter Recognition") as demo:
     up_btn.click(predict_upload, up_in, [up_out, up_label, up_msg])
 
 if __name__ == "__main__":
-    demo.queue(max_size=20).launch()
+    demo.queue(max_size=20).launch(share=True)
 
 
